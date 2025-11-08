@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gizli Günlük</title>
+<style>
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #000;
+    color: #fff;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Dekoratif Lavanta ve Papatya Figürleri */
+  .decor {
+    position: fixed;
+    background-repeat: no-repeat;
+    background-size: contain;
+    opacity: 0.1;
+    z-index: 0;
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0) rotate(var(--r)); }
+    50% { transform: translateY(-10px) rotate(calc(var(--r) + 3deg)); }
+    100% { transform: translateY(0) rotate(var(--r)); }
+  }
+
+  .lavender {
+    background-image: url('https://cdn.pixabay.com/photo/2017/05/20/22/38/lavender-2338665_1280.png');
+    width: 500px;
+    height: 500px;
+    bottom: -50px;
+    right: -50px;
+    --r: 25deg;
+  }
+
+  .daisy {
+    background-image: url('https://cdn.pixabay.com/photo/2017/01/31/21/23/daisy-2027660_1280.png');
+    width: 450px;
+    height: 450px;
+    top: -60px;
+    left: -40px;
+    --r: -10deg;
+  }
+
+  /* Giriş Ekranı */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .login-box {
+    background: rgba(20,20,20,0.95);
+    padding: 24px 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(200,200,255,0.1);
+    max-width: 400px;
+    width: 90%;
+    z-index: 20;
+  }
+
+  .login-box h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  .login-box input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: white;
+    font-size: 1rem;
+  }
+
+  .login-box button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #7c4dff;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .login-box button:hover {
+    background: #9d70ff;
+  }
+
+  .msg {
+    color: #ff6b6b;
+    margin-top: 10px;
+    text-align: center;
+    display: none;
+  }
+
+  /* Ana İçerik */
+  .container {
+    max-width: 900px;
+    margin: 50px auto;
+    background: rgba(10,10,10,0.9);
+    padding: 20px;
+    border-radius: 12px;
+    position: relative;
+    z-index: 2;
+  }
+
+  textarea, input[type="date"] {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100%;
+  }
+
+  button.action {
+    background: #7c4dff;
+    color: white;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  button.action:hover {
+    background: #9d70ff;
+  }
+
+  .note {
+    background: rgba(255,255,255,0.05);
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+  }
+
+  .note .meta {
+    color: #ccc;
+    font-size: 0.9em;
+  }
+
+  .spotify {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .spotify input {
+    width: 80%;
+  }
+
+  a {
+    color: #b28fff;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+
+<!-- Dekoratif Figürler -->
+<div class="decor daisy"></div>
+<div class="decor lavender"></div>
+
+<!-- Giriş Ekranı -->
+<div class="overlay" id="overlay">
+  <div class="login-box">
+    <h2>Giriş</h2>
+    <input type="password" id="password" placeholder="Şifreyi girin">
+    <button id="loginBtn">Giriş Yap</button>
+    <div class="msg" id="msg">Yanlış şifre.</div>
+  </div>
+</div>
+
+<!-- İçerik -->
+<div class="container" id="content" style="display:none;">
+  <h2>Gizli Günlük 🌼</h2>
+
+  <div id="writeArea" style="display:none;">
+    <input type="date" id="dateInput"><br>
+    <textarea id="noteInput" placeholder="Bugün ne oldu?"></textarea><br>
+    <button class="action" id="saveNote">Kaydet</button>
+  </div>
+
+  <div class="spotify" id="spotifyArea" style="display:none;">
+    <h3>🎵 Spotify bağlantısı ekle</h3>
+    <input type="text" id="spotifyLink" placeholder="Spotify bağlantısı">
+    <button class="action" id="saveLink">Kaydet</button>
+  </div>
+
+  <h3 style="margin-top:30px;">Notlar</h3>
+  <div id="notes"></div>
+
+  <div id="spotifyDisplayBottom" class="spotify"></div>
+</div>
+
+<script>
+const ownerPass = "04.09.2010";
+const readerPass = "01.16.2024";
+const overlay = document.getElementById("overlay");
+const msg = document.getElementById("msg");
+const passwordInput = document.getElementById("password");
+const notesEl = document.getElementById("notes");
+const writeArea = document.getElementById("writeArea");
+const spotifyArea = document.getElementById("spotifyArea");
+const spotifyDisplayBottom = document.getElementById("spotifyDisplayBottom");
+const spotifyInput = document.getElementById("spotifyLink");
+
+let isOwner = false;
+
+function loadNotes(){
+  const data = JSON.parse(localStorage.getItem("notesData") || "[]");
+  notesEl.innerHTML = "";
+  data.sort((a,b)=> new Date(b.savedAt) - new Date(a.savedAt));
+  for(const n of data){
+    const div = document.createElement("div");
+    div.className = "note";
+    div.innerHTML = `
+      <div class="meta">${n.date} — ${new Date(n.savedAt).toLocaleString()}</div>
+      <div>${n.text}</div>
+    `;
+    if(isOwner){
+      const del = document.createElement("button");
+      del.textContent = "Sil";
+      del.className = "action";
+      del.style.background = "#a33";
+      del.style.marginTop = "6px";
+      del.onclick = ()=>{
+        const arr = JSON.parse(localStorage.getItem("notesData") || "[]").filter(x => x.savedAt !== n.savedAt);
+        localStorage.setItem("notesData", JSON.stringify(arr));
+        loadNotes();
+      };
+      div.appendChild(del);
+    }
+    notesEl.appendChild(div);
+  }
+}
+
+function loadSpotify(){
+  const link = localStorage.getItem("spotifyLink");
+  if(link){
+    spotifyDisplayBottom.innerHTML = `<h3>🎧 Spotify</h3><a href="${link}" target="_blank">${link}</a>`;
+  } else {
+    spotifyDisplayBottom.innerHTML = "";
+  }
+}
+
+document.getElementById("loginBtn").onclick = ()=>{
+  const val = passwordInput.value.trim();
+  if(val === ownerPass){
+    isOwner = true;
+  } else if(val === readerPass){
+    isOwner = false;
+  } else {
+    msg.style.display = "block";
+    return;
+  }
+  msg.style.display = "none";
+  overlay.style.display = "none";
+  document.getElementById("content").style.display = "block";
+  if(isOwner){
+    writeArea.style.display = "block";
+    spotifyArea.style.display = "block";
+  }
+  loadNotes();
+  loadSpotify();
+};
+
+document.getElementById("saveNote").onclick = ()=>{
+  const date = document.getElementById("dateInput").value;
+  const text = document.getElementById("noteInput").value.trim();
+  if(!date || !text) return alert("Lütfen tarih ve not gir.");
+  const arr = JSON.parse(localStorage.getItem("notesData") || "[]");
+  arr.push({date, text, savedAt: new Date().toISOString()});
+  localStorage.setItem("notesData", JSON.stringify(arr));
+  document.getElementById("noteInput").value = "";
+  loadNotes();
+};
+
+document.getElementById("saveLink").onclick = ()=>{
+  const link = spotifyInput.value.trim();
+  if(!link) return alert("Bağlantı gir.");
+  localStorage.setItem("spotifyLink", link);
+  loadSpotify();
+  spotifyInput.value = "";
+};
+</script>
+</body>
+</html>
